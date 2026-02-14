@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  carelink-bridge:
+    build: .
+    image: carelink-bridge:latest
+    container_name: carelink-bridge
+    restart: unless-stopped
+    volumes:
+      # Mount logindata.json - REQUIRED: Run 'npm run login' first to generate this file
+      - ./logindata.json:/app/logindata.json
+    environment:
+      - NODE_ENV=production
+      
+      # CareLink credentials - REQUIRED
+      - CARELINK_USERNAME=your-carelink-username
+      - CARELINK_PASSWORD=your-carelink-password
+      
+      # Nightscout configuration - REQUIRED
+      - API_SECRET=your-nightscout-api-secret
+      - NS=https://your-nightscout-site.example.com
+      # Region - OPTIONAL (default: EU)
+      # Uncomment the line below if you're in the United States
+      # - MMCONNECT_SERVER=US
+      # Advanced settings - OPTIONAL
+      # - MMCONNECT_COUNTRYCODE=gb
+      # - MMCONNECT_LANGCODE=en
+      # - CARELINK_INTERVAL=300        # Fetch interval in seconds (default: 300 = 5 minutes)
+      # - CARELINK_SGV_LIMIT=24         # Number of sensor glucose values to fetch
+      # - CARELINK_QUIET=true           # Reduce log verbosity
+      # - CARELINK_PATIENT=             # Patient username (for care partner accounts)
+      # - USE_PROXY=false               # Enable proxy support
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

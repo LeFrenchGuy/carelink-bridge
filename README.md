@@ -87,6 +87,62 @@ All settings go in the `.env` file. Only the first four are required — the res
 | `CARELINK_PATIENT` | | Patient username, only needed if your care partner account has multiple patients |
 | `CARELINK_QUIET` | `true` | Set to `false` to see more detailed logs |
 
+## Docker Deployment
+
+### Quick Start with Docker
+
+If you prefer to run this in a Docker container (recommended for servers like TrueNAS, Synology, or any Linux server):
+
+#### 1. Initial login (one-time, requires browser access)
+
+On a machine with a browser (your Mac/PC):
+
+```bash
+npm install
+npm run login
+```
+
+This creates `logindata.json` with your authentication tokens.
+
+#### 2. Configure docker-compose.yml
+
+Edit `docker-compose.yml` and update the environment variables:
+- `CARELINK_USERNAME` - Your CareLink username
+- `CARELINK_PASSWORD` - Your CareLink password
+- `API_SECRET` - Your Nightscout API secret
+- `NS` - Your Nightscout URL
+
+#### 3. Deploy
+
+```bash
+# Build and run
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop
+docker-compose down
+```
+
+### Deploying to TrueNAS or Remote Server
+
+1. **Transfer files to your server:**
+   ```bash
+   rsync -av --exclude 'node_modules' --exclude 'dist' --exclude '.git' \
+     ./ user@server-ip:/path/to/carelink-bridge/
+   ```
+
+2. **On the server, run:**
+   ```bash
+   cd /path/to/carelink-bridge
+   docker-compose up -d
+   ```
+
+**Important:** The `logindata.json` file contains refresh tokens that automatically renew. You only need browser access for the initial `npm run login` step.
+
+See [DOCKER.md](DOCKER.md) for detailed Docker deployment instructions.
+
 ## For developers
 
 ```bash
