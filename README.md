@@ -85,7 +85,8 @@ All settings go in the `.env` file. Only the first four are required — the res
 | `MMCONNECT_COUNTRYCODE` | `gb` | Your country code (e.g. `us`, `de`, `nl`) |
 | `CARELINK_INTERVAL` | `300` | How often to fetch data, in seconds (300 = 5 minutes) |
 | `CARELINK_PATIENT` | | Patient username, only needed if your care partner account has multiple patients |
-| `CARELINK_QUIET` | `true` | Set to `false` to see more detailed logs |
+| `LOG_LEVEL` | `info` | Log level: `info` (default) or `debug` for verbose logging |
+| `TZ` | `UTC` | Timezone for log timestamps (e.g., `America/New_York`, `Europe/London`) |
 
 ## Docker Deployment
 

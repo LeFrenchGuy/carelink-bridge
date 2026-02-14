@@ -47,9 +47,11 @@ export function loadConfig(): Config {
     interval: parseInt(readEnvString('CARELINK_INTERVAL', String(defaultIntervalSeconds))!, 10) * 1000,
     sgvLimit: parseInt(readEnvString('CARELINK_SGV_LIMIT', '24')!, 10),
     maxRetryDuration: parseInt(readEnvString('CARELINK_MAX_RETRY_DURATION', '512')!, 10),
-    verbose: !readEnvBool('CARELINK_QUIET', true),
+    verbose: readEnvString('LOG_LEVEL')?.toLowerCase() === 'debug' || 
+             readEnvBool('CARELINK_QUIET', true) === false,
     patientId: readEnvString('CARELINK_PATIENT'),
     countryCode: readEnvString('MMCONNECT_COUNTRYCODE', 'gb')!,
     language: readEnvString('MMCONNECT_LANGCODE', 'en')!,
+    timezone: readEnvString('TZ'),
   };
 }

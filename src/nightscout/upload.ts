@@ -6,7 +6,7 @@ export async function upload(
   entries: unknown[],
   endpoint: string,
   secret: string,
-): Promise<void> {
+): Promise<number> {
   logger.log('POST ' + endpoint + ' ' + JSON.stringify(entries));
 
   const hashedSecret = crypto.createHash('sha1').update(secret).digest('hex');
@@ -18,4 +18,6 @@ export async function upload(
   if (response.status !== 200) {
     throw new Error('Error uploading to Nightscout: HTTP ' + response.status);
   }
+
+  return response.status;
 }

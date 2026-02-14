@@ -20,6 +20,23 @@ import type { NightscoutSGVEntry, NightscoutDeviceStatus } from './types/nightsc
 
 const config = loadConfig();
 logger.setVerbose(config.verbose);
+logger.setTimezone(config.timezone);
+
+// Log configuration at startup (sanitized)
+const isUS = (process.env['MMCONNECT_SERVER'] || 'EU').toUpperCase() !== 'EU';
+console.log('[Config] CareLink Region:', isUS ? 'US' : 'EU');
+console.log('[Config] CareLink Username:', config.username);
+console.log('[Config] CareLink Password:', config.password ? '****** (set)' : '(not set)');
+console.log('[Config] Nightscout URL:', config.nsBaseUrl || config.nsHost);
+console.log('[Config] Nightscout API Secret:', config.nsSecret ? '****** (set)' : '(not set)');
+console.log('[Config] Fetch Interval:', config.interval / 1000, 'seconds');
+console.log('[Config] SGV Limit:', config.sgvLimit);
+console.log('[Config] Country Code:', config.countryCode);
+console.log('[Config] Language:', config.language);
+if (config.patientId) console.log('[Config] Patient ID:', config.patientId);
+console.log('[Config] Timezone:', config.timezone || 'System default');
+console.log('[Config] Log Level:', config.verbose ? 'debug' : 'info');
+console.log('');
 
 const client = new CareLinkClient({
   username: config.username,
@@ -49,10 +66,13 @@ async function uploadIfNew(items: unknown[], endpoint: string): Promise<void> {
     return;
   }
   try {
-    await upload(items, endpoint, config.nsSecret);
+    const statusCode = await upload(items, endpoint, config.nsSecret);
+    const endpointName = endpoint.includes('entries') ? 'entries' : 'devicestatus';
+    console.log(`[Upload] ✓ Successfully uploaded ${items.length} ${endpointName} to Nightscout (HTTP ${statusCode})`);
   } catch (err) {
+    const endpointName = endpoint.includes('entries') ? 'entries' : 'devicestatus';
+    console.error(`[Upload] ✗ Failed to upload ${endpointName}:`, (err as Error).message);
     // Continue even if Nightscout can't be reached
-    console.error(err);
   }
 }
 

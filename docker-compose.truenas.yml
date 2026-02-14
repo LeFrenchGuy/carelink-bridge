@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      TZ: America/Toronto
+      TZ: America/Toronto  # Timezone for log timestamps and system time
       
       # CareLink credentials - REQUIRED
       CARELINK_USERNAME: your-carelink-username
@@ -23,7 +23,7 @@ services:
       # Advanced settings - OPTIONAL
       # CARELINK_INTERVAL: 300
       # CARELINK_SGV_LIMIT: 24
-      # CARELINK_QUIET: true
+      # LOG_LEVEL: info  # Options: info (default), debug
     
     volumes:
       # Mount logindata.json as a file

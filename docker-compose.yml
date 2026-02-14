@@ -27,7 +27,8 @@ services:
       # - MMCONNECT_LANGCODE=en
       # - CARELINK_INTERVAL=300        # Fetch interval in seconds (default: 300 = 5 minutes)
       # - CARELINK_SGV_LIMIT=24         # Number of sensor glucose values to fetch
-      # - CARELINK_QUIET=true           # Reduce log verbosity
+      # - LOG_LEVEL=info                # Log level: info (default) or debug
+      # - TZ=America/Toronto            # Timezone for log timestamps (default: UTC)
       # - CARELINK_PATIENT=             # Patient username (for care partner accounts)
       # - USE_PROXY=false               # Enable proxy support
     
