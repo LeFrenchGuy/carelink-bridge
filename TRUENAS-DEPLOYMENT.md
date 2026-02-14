@@ -89,7 +89,7 @@ ssh root@your-truenas-ip "ls -la /mnt/apps-pool/app_configs/carelink-bridge/"
    TZ=America/Toronto
    CARELINK_USERNAME=your-carelink-username
    CARELINK_PASSWORD=your-carelink-password
-   API_SECRET=SuperSecret123
+   API_SECRET=your-nightscout-api-secret
    NS=http://nightscout:1337
    ```
    
@@ -135,7 +135,7 @@ ssh root@your-truenas-ip "ls -la /mnt/apps-pool/app_configs/carelink-bridge/"
    - `your-dockerhub-username/carelink-bridge:latest`
    - `CARELINK_USERNAME`
    - `CARELINK_PASSWORD`
-   - `API_SECRET` (match your Nightscout secret)
+   - `API_SECRET` (match your Nightscout secret - use your actual secret)
    - `NS` URL
 
 3. **Deploy**:
@@ -155,7 +155,7 @@ services:
     container_name: mongo
     environment:
       MONGO_INITDB_DATABASE: nightscout
-      MONGO_INITDB_ROOT_PASSWORD: myStrongPassword
+      MONGO_INITDB_ROOT_PASSWORD: your-mongo-password
       MONGO_INITDB_ROOT_USERNAME: admin
       TZ: America/Toronto
     image: mongo:6.0
@@ -172,10 +172,10 @@ services:
     depends_on:
       - mongo
     environment:
-      API_SECRET: SuperSecret123
+      API_SECRET: your-nightscout-api-secret
       ENABLE: careportal basal iob cob pump sage
       INSECURE_USE_HTTP: 'true'
-      MONGO_CONNECTION: mongodb://admin:myStrongPassword@mongo:27017/test?authSource=admin
+      MONGO_CONNECTION: mongodb://admin:your-mongo-password@mongo:27017/test?authSource=admin
       TZ: America/Toronto
     image: nightscout/cgm-remote-monitor:latest
     ports:
@@ -199,7 +199,7 @@ services:
       TZ: America/Toronto
       CARELINK_USERNAME: your-carelink-username
       CARELINK_PASSWORD: your-carelink-password
-      API_SECRET: SuperSecret123
+      API_SECRET: your-nightscout-api-secret
       NS: http://nightscout:1337
       # MMCONNECT_SERVER: US  # Uncomment if in US
     volumes:

@@ -14,7 +14,7 @@ services:
       CARELINK_PASSWORD: your-carelink-password
       
       # Nightscout configuration - REQUIRED
-      API_SECRET: SuperSecret123
+      API_SECRET: your-nightscout-api-secret
       NS: http://nightscout:1337
       
       # Region - OPTIONAL (default: EU)
