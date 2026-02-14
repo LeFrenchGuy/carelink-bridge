@@ -21,16 +21,25 @@ import type { NightscoutSGVEntry, NightscoutDeviceStatus } from './types/nightsc
 const config = loadConfig();
 logger.setVerbose(config.verbose);
 
+logger.log('Config loaded:');
+logger.log('  nsHost:', config.nsHost);
+logger.log('  nsBaseUrl:', config.nsBaseUrl);
+
 const client = new CareLinkClient({
   username: config.username,
   password: config.password,
   maxRetryDuration: config.maxRetryDuration,
   patientId: config.patientId,
+  countryCode: config.countryCode,
+  lang: config.language,
 });
 
 const baseUrl = config.nsBaseUrl || ('https://' + config.nsHost);
+logger.log('Constructed baseUrl:', baseUrl);
 const entriesUrl = baseUrl + '/api/v1/entries.json';
 const devicestatusUrl = baseUrl + '/api/v1/devicestatus.json';
+logger.log('entriesUrl:', entriesUrl);
+logger.log('devicestatusUrl:', devicestatusUrl);
 
 const filterSgvs = makeRecencyFilter<NightscoutSGVEntry>(item => item.date);
 const filterDeviceStatus = makeRecencyFilter<NightscoutDeviceStatus>(
@@ -46,11 +55,13 @@ async function uploadIfNew(items: unknown[], endpoint: string): Promise<void> {
     logger.log('No new items for', endpoint);
     return;
   }
+  logger.log(`Uploading ${items.length} items to ${endpoint}`);
   try {
     await upload(items, endpoint, config.nsSecret);
+    logger.log(`Upload successful for ${endpoint}`);
   } catch (err) {
     // Continue even if Nightscout can't be reached
-    console.error(err);
+    console.error('Upload error:', err);
   }
 }
 
@@ -64,8 +75,14 @@ async function requestLoop(): Promise<void> {
         console.log('[Bridge] Data keys:', Object.keys(data || {}));
       } else {
         const transformed = transform(data, config.sgvLimit);
+        logger.log('Transformed entries count:', transformed.entries.length);
+        logger.log('Transformed devicestatus count:', transformed.devicestatus.length);
+        
         const newSgvs = filterSgvs(transformed.entries);
         const newDeviceStatuses = filterDeviceStatus(transformed.devicestatus);
+        
+        logger.log('New SGVs after filter:', newSgvs.length);
+        logger.log('New device statuses after filter:', newDeviceStatuses.length);
 
         logger.log(
           `Next check in ${Math.round(config.interval / 1000)}s` +
