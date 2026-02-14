@@ -26,6 +26,8 @@ services:
       # CARELINK_QUIET: true
     
     volumes:
+      # Mount logindata.json as a file
+      # WORKFLOW: 1) Start container (creates directory), 2) Stop container, 3) SCP file, 4) Restart
       - /mnt/apps-pool/app_configs/carelink-bridge/logindata.json:/app/logindata.json
       - /usr/share/zoneinfo:/usr/share/zoneinfo:ro
       - /etc/timezone:/etc/timezone:ro

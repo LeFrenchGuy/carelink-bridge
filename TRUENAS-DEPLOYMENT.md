@@ -33,30 +33,78 @@ docker push your-dockerhub-username/carelink-bridge:latest
 
 ## Step 2: Prepare TrueNAS
 
-### Create Directory Structure
+### Option A: Automated Deployment Script (Recommended)
+
+Use the provided script to handle everything automatically:
+
+```bash
+# On your Mac
+cd /Users/nraverdy/git/Perso/LeFrenchGuy/carelink-bridge
+
+# Set your TrueNAS connection details
+export TRUENAS_USER=truenas_admin
+export TRUENAS_HOST=your-truenas-ip
+
+# Run the deployment script
+./deploy-to-truenas.sh
+```
+
+The script will:
+- ✅ Create directory structure on TrueNAS
+- ✅ Handle the logindata.json directory issue automatically
+- ✅ Copy logindata.json as a proper file
+- ✅ Copy docker-compose.yml if needed
+- ✅ Verify everything is correct
+
+Then follow the on-screen instructions to edit your credentials and start the container.
+
+### Option B: Manual Setup
+
+If you prefer to do it manually:
+
+#### Create Directory Structure
 
 SSH into TrueNAS and create the necessary directories:
 
 ```bash
-ssh root@your-truenas-ip
+ssh truenas_admin@your-truenas-ip
 
 # Create config directory
-mkdir -p /mnt/apps-pool/app_configs/carelink-bridge
+sudo mkdir -p /mnt/apps-pool/app_configs/carelink-bridge
 
 # Set permissions
-chmod 755 /mnt/apps-pool/app_configs/carelink-bridge
+sudo chmod 755 /mnt/apps-pool/app_configs/carelink-bridge
 ```
 
-### Transfer logindata.json
+#### Transfer logindata.json
 
-From your Mac:
+**⚠️ IMPORTANT:** You must copy `logindata.json` to TrueNAS as a FILE. If Docker creates it first, it will be a directory.
+
+**Recommended workflow:**
 
 ```bash
-# Copy logindata.json to TrueNAS
-scp logindata.json root@your-truenas-ip:/mnt/apps-pool/app_configs/carelink-bridge/
+# From your Mac
 
-# Verify it was copied
-ssh root@your-truenas-ip "ls -la /mnt/apps-pool/app_configs/carelink-bridge/"
+# 1. Copy logindata.json directly (directory will be created by Docker if needed)
+scp logindata.json truenas_admin@your-truenas-ip:/mnt/apps-pool/app_configs/carelink-bridge/
+
+# 2. Verify it was copied as a FILE (should show '-' not 'd' at the start)
+ssh truenas_admin@your-truenas-ip "ls -la /mnt/apps-pool/app_configs/carelink-bridge/logindata.json"
+```
+
+Expected output:
+```
+-rw-r--r-- 1 truenas_admin truenas_admin 1253 Feb 14 16:30 logindata.json
+```
+
+**If logindata.json was created as a directory:**
+
+```bash
+# Remove the directory
+ssh truenas_admin@your-truenas-ip "sudo rm -rf /mnt/apps-pool/app_configs/carelink-bridge/logindata.json"
+
+# Copy the file again
+scp logindata.json truenas_admin@your-truenas-ip:/mnt/apps-pool/app_configs/carelink-bridge/
 ```
 
 ## Step 3: Deploy Using TrueNAS Custom App
