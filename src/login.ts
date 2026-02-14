@@ -463,9 +463,8 @@ export async function login(isUS: boolean, username?: string, password?: string)
   }
 
   // Exchange authorization code for tokens
-  console.log('Exchanging code for tokens...');
+  console.log('[Login] Exchanging code for tokens...');
   const tokenUrl = baseUrl + ssoConfig.system_endpoints.token_endpoint_path;
-  
   const tokenResp = await axios.post(tokenUrl, qs.stringify({
     grant_type: 'authorization_code',
     client_id: client.client_id,
@@ -480,7 +479,7 @@ export async function login(isUS: boolean, username?: string, password?: string)
     throw new Error('Token exchange failed: ' + JSON.stringify(tokenResp.data));
   }
 
-  console.log('Got tokens');
+  console.log('[Login] Got tokens');
 
   const loginData: LoginData = {
     access_token: tokenResp.data.access_token,
