@@ -135,7 +135,7 @@ ssh root@your-truenas-ip "ls -la /mnt/apps-pool/app_configs/carelink-bridge/"
    - `your-dockerhub-username/carelink-bridge:latest`
    - `CARELINK_USERNAME`
    - `CARELINK_PASSWORD`
-   - `API_SECRET` (match your Nightscout secret)
+   - `API_SECRET` (match your Nightscout secret - use your actual secret)
    - `NS` URL
 
 3. **Deploy**:
