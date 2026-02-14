@@ -126,29 +126,11 @@ export class CareLinkClient {
     }
 
     this.axiosInstance.defaults.headers.common['Authorization'] = 'Bearer ' + loginData.access_token;
-    logger.log('Using token-based auth from logindata.json');
-    logger.log('Token audience:', loginData.audience);
-    logger.log('Token scope:', loginData.scope);
-    
-    try {
-      const parts = loginData.access_token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-        logger.log('Token expires:', new Date(payload.exp * 1000).toISOString());
-        logger.log('Token issued:', new Date(payload.iat * 1000).toISOString());
-        if (payload.permissions) logger.log('Token permissions:', payload.permissions);
-        if (payload.token_details?.roles) logger.log('Token roles:', payload.token_details.roles);
-      }
-    } catch (e) {
-      logger.log('Could not decode token payload');
-    }
+    console.log('[Token] Using token-based auth from logindata.json');
   }
 
   private async getCurrentRole(): Promise<string> {
-    logger.log('GET', this.urls.me);
     const resp = await this.axiosInstance.get<CareLinkUserInfo>(this.urls.me);
-    logger.log('Response status:', resp.status);
-    logger.log('User role:', resp.data?.role);
     return resp.data?.role?.toUpperCase() ?? '';
   }
 
@@ -163,8 +145,6 @@ export class CareLinkClient {
   }
 
   private async fetchAsCarepartner(role: string): Promise<CareLinkData> {
-    logger.log('GET linked patients', this.urls.linkedPatients);
-    
     const resp = await this.axiosInstance.get<CareLinkPatientLink[]>(this.urls.linkedPatients);
     const patients = resp.data;
 
@@ -173,12 +153,10 @@ export class CareLinkClient {
     }
 
     console.log(`Found ${patients.length} linked patient(s)`);
-    patients.forEach(p => logger.log('Patient:', p.username));
-
     const patient = patients[0];
     console.log(`Fetching data for patient: ${patient.username}`);
-    const url = this.urls.connectData(Date.now());
     
+    const url = this.urls.connectData(Date.now());
     const dataResp = await this.axiosInstance.get<CareLinkData>(url, {
       params: {
         username: patient.username,
@@ -186,30 +164,22 @@ export class CareLinkClient {
       },
     });
 
-    if (dataResp.data.sgs) logger.log('Sensor glucose readings:', dataResp.data.sgs.length);
-    if (dataResp.data.lastSG) logger.log('Last SG:', dataResp.data.lastSG.sg, 'mg/dL at', dataResp.data.lastSG.datetime);
-
     logger.log('GET data', url);
     return dataResp.data;
   }
 
   private async fetchBleDeviceData(): Promise<CareLinkData> {
-    console.log('Fetching BLE device data');
+    console.log('[BLE] Fetching BLE device data');
     
-    logger.log('GET country settings:', this.urls.countrySettings);
     const settingsResp = await this.axiosInstance.get<CareLinkCountrySettings>(this.urls.countrySettings);
-    
     const bleEndpoint = settingsResp.data?.blePereodicDataEndpoint;
-    logger.log('BLE endpoint from settings:', bleEndpoint);
     
     if (!bleEndpoint) {
       throw new Error('No BLE endpoint found in country settings');
     }
     
-    logger.log('GET user info for patientId');
     const userResp = await this.axiosInstance.get<CareLinkUserInfo>(this.urls.me);
     const patientId = userResp.data?.id;
-    logger.log('Patient ID:', patientId);
     
     const body: any = {
       username: this.options.username,
@@ -221,8 +191,6 @@ export class CareLinkClient {
       body.patientId = patientId;
     }
     
-    logger.log('POST to BLE endpoint:', bleEndpoint);
-    
     try {
       const resp = await this.axiosInstance.post<any>(bleEndpoint, body, {
         headers: { 
@@ -232,32 +200,23 @@ export class CareLinkClient {
       });
       
       if (resp.data && resp.status === 200) {
-        console.log('Successfully got data from BLE endpoint');
-        if (resp.data.sgs) logger.log('Sensor glucose readings:', resp.data.sgs.length);
-        if (resp.data.lastSG) logger.log('Last SG:', resp.data.lastSG.sg, 'mg/dL at', resp.data.lastSG.datetime);
-        if (resp.data.averageSG) logger.log('Average SG:', resp.data.averageSG);
-        if (resp.data.timeInRange) logger.log('Time in range:', resp.data.timeInRange + '%');
+        console.log('[BLE] Successfully got data from BLE endpoint');
         logger.log('GET data', bleEndpoint);
         return resp.data;
       }
       
       throw new Error('BLE endpoint returned empty data');
     } catch (e: any) {
-      logger.log('BLE POST failed with status:', e.response?.status);
-      logger.log('Error response:', e.response?.data);
       throw e;
     }
   }
 
   private async fetchAsPatient(): Promise<CareLinkData> {
-    logger.log('GET monitor endpoint:', this.urls.monitorData);
     try {
       const resp = await this.axiosInstance.get<CareLinkData>(this.urls.monitorData);
-      logger.log('Monitor response status:', resp.status);
       
       if (resp.data && (resp.data as any).deviceFamily) {
         const deviceFamily = (resp.data as any).deviceFamily;
-        logger.log('Device family:', deviceFamily);
         
         const isBleDevice = deviceFamily && (
           deviceFamily.includes('BLE') || 
@@ -266,34 +225,25 @@ export class CareLinkClient {
         );
         
         if (isBleDevice) {
-          console.log('BLE device detected, fetching from BLE endpoint');
+          console.log('[BLE] BLE device detected, fetching from BLE endpoint');
           return this.fetchBleDeviceData();
         }
       }
       
       if (resp.status === 200 && resp.data && Object.keys(resp.data).length > 1) {
-        console.log('Successfully got data from monitor endpoint');
-        if (resp.data.sgs) logger.log('Sensor glucose readings:', resp.data.sgs.length);
-        if (resp.data.lastSG) logger.log('Last SG:', resp.data.lastSG.sg, 'mg/dL at', resp.data.lastSG.datetime);
         logger.log('GET data', this.urls.monitorData);
         return resp.data;
       }
-      logger.log('Monitor endpoint returned minimal data, trying legacy endpoint');
     } catch (e: any) {
-      logger.log('Monitor endpoint failed:', e.response?.status, e.message);
+      // Fall through to legacy endpoint
     }
 
     const url = this.urls.connectData(Date.now());
-    logger.log('GET legacy connect endpoint:', url);
     const resp = await this.axiosInstance.get<CareLinkData>(url);
     
     if (resp.status === 204 || !resp.data || Object.keys(resp.data).length === 0) {
-      console.log('WARNING: Connect endpoint returned no content (HTTP ' + resp.status + ')');
-      console.log('This may indicate the device has not uploaded data recently or requires a different endpoint');
-    } else {
-      console.log('Successfully got data from connect endpoint');
-      if (resp.data.sgs) logger.log('Sensor glucose readings:', resp.data.sgs.length);
-      if (resp.data.lastSG) logger.log('Last SG:', resp.data.lastSG.sg, 'mg/dL at', resp.data.lastSG.datetime);
+      console.log('[Patient] WARNING: Connect endpoint returned no content (HTTP ' + resp.status + ')');
+      console.log('[Patient] This may indicate the device has not uploaded data recently or requires a different endpoint');
     }
     
     logger.log('GET data', url);
@@ -301,19 +251,18 @@ export class CareLinkClient {
   }
 
   async fetch(): Promise<CareLinkData> {
-    logger.log('Starting data fetch...');
     this.requestCount = 0;
     this.proxyRotator.resetRetries();
 
     const maxRetry = this.proxyRotator.hasProxies ? 10 : 1;
-    logger.log('Max retries:', maxRetry);
+    console.log('[Fetch] Starting fetch, max retries:', maxRetry);
 
     for (let i = 1; i <= maxRetry; i++) {
       try {
         this.requestCount = 0;
         await this.authenticate();
         const data = await this.getConnectData();
-        logger.log('Fetch success!');
+        console.log('[Fetch] Success!');
         return data;
       } catch (e: unknown) {
         const err = e as { response?: { status: number }; code?: string; cause?: { code?: string }; message?: string };
@@ -322,10 +271,10 @@ export class CareLinkClient {
         const isProxyError = [400, 403, 407, 502, 503].includes(httpStatus ?? 0);
         const isNetworkError = ['ECONNREFUSED', 'ETIMEDOUT', 'ECONNRESET', 'ENOTFOUND', 'EPROTO', 'ERR_SOCKET_BAD_PORT'].includes(errorCode);
 
-        logger.log(`Attempt ${i} failed: ${httpStatus ? 'HTTP ' + httpStatus : errorCode || (err as Error).message}`);
+        console.log(`[Fetch] Attempt ${i} failed: ${httpStatus ? 'HTTP ' + httpStatus : errorCode || (err as Error).message}`);
 
         if ((isProxyError || isNetworkError) && this.proxyRotator.hasProxies) {
-          logger.log('Trying next proxy...');
+          console.log('[Fetch] Trying next proxy...');
           const nextProxy = this.proxyRotator.tryNext();
           if (!nextProxy) throw e;
           this.applyProxy(nextProxy);
