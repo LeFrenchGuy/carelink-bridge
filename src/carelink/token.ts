@@ -44,7 +44,7 @@ export function isTokenExpired(accessToken: string): boolean {
 }
 
 export async function refreshToken(loginData: LoginData): Promise<LoginData> {
-  console.log('[Token] Refreshing access token...');
+  console.log('Refreshing access token...');
 
   const resp = await axios.post(
     loginData.token_url,
@@ -61,6 +61,6 @@ export async function refreshToken(loginData: LoginData): Promise<LoginData> {
     loginData.refresh_token = resp.data.refresh_token;
   }
 
-  console.log('[Token] Token refreshed successfully');
+  console.log('Token refreshed successfully');
   return loginData;
 }
